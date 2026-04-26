@@ -65,4 +65,10 @@ jobs:
         uses: gradle/actions/setup-gradle@f236b35da9d031e13b1005234ebe4392ed54c580
 
       - name: Build PNX Server
-        run: ./gradlew clean build --no-configuration-cache
+        run: ./gradlew clean assemble --no-configuration-cache
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+           name: powernukkitx
+           path: build/libs/*.jar
