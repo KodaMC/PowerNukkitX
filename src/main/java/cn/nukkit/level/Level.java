@@ -1173,11 +1173,11 @@ public class Level implements Metadatable {
 
             this.updateQueue.tick(this.getCurrentTick());
 
-            if (getGameRules().getBoolean(GameRule.DO_MOB_SPAWNING)) {
-                if (Arrays.stream(getEntities()).filter(entity -> entity.despawnable).toArray().length < Server.getInstance().getSettings().levelSettings().entitySpawnCap()) {
-                    getChunks().values().forEach(IChunk::doMobSpawning);
-                }
-            }
+//            if (getGameRules().getBoolean(GameRule.DO_MOB_SPAWNING)) {
+//                if (Arrays.stream(getEntities()).filter(entity -> entity.despawnable).toArray().length < Server.getInstance().getSettings().levelSettings().entitySpawnCap()) {
+//                    getChunks().values().forEach(IChunk::doMobSpawning);
+//                }
+//            }
 
             while (!this.normalUpdateQueue.isEmpty()) {
                 QueuedUpdate queuedUpdate = this.normalUpdateQueue.poll();

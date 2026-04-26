@@ -115,66 +115,66 @@ public class BlockEntityMobSpawner extends BlockEntitySpawnable {
 
         if(!getLevel().getGameRules().getBoolean(GameRule.DO_MOB_SPAWNING)) return true;
 
-        if (this.delay++ >= Utils.rand(this.minSpawnDelay, this.maxSpawnDelay)) {
-            this.delay = 0;
-            int nearbyEntities = 0;
-            boolean playerInRange = false;
-            for (Entity entity : this.level.getEntities()) {
-                if (!playerInRange && entity instanceof Player && !((Player) entity).isSpectator()) {
-                    if (entity.distance(this) <= this.requiredPlayerRange) {
-                        playerInRange = true;
-                    }
-                } else if (entity instanceof EntityAnimal || entity instanceof EntityMob) {
-                    if (entity.distance(this) <= this.requiredPlayerRange) {
-                        nearbyEntities++;
-                    }
-                }
-            }
-
-            int amountToSpawn = minSpawnCount + nukkitRandom.nextInt(maxSpawnCount);
-            for (int i = 0; i < amountToSpawn; i++) {
-                if (playerInRange && nearbyEntities <= this.maxNearbyEntities) {
-                    Position pos = new Position
-                            (
-                                    this.x + Utils.rand(-this.spawnRange, this.spawnRange),
-                                    this.getY(),
-                                    this.z + Utils.rand(-this.spawnRange, this.spawnRange),
-                                    this.level
-                            );
-                    Block block = level.getBlock(pos);
-                    //Mobs shouldn't spawn in walls, and they shouldn't retry to
-                    if (
-                            !block.getId().equals(Block.AIR) && !(block instanceof BlockFlowable) &&
-                                    !block.getId().equals(BlockID.FLOWING_WATER) && !block.getId().equals(BlockID.WATER) &&
-                                    !block.getId().equals(BlockID.LAVA) && !block.getId().equals(BlockID.FLOWING_LAVA)
-                    ) {
-                        continue;
-                    }
-                    if(!block.subtract(0, 1, 0).getLevelBlock().isSolid()) {
-                        continue;
-                    }
-
-                    Entity ent = Entity.createEntity(this.entityId, pos);
-                    if(ent instanceof EntityMob && getLevel().getFullLight(this) > 7) {
-                        ent.close();
-                        continue;
-                    }
-                    CreatureSpawnEvent ev = new CreatureSpawnEvent(this.entityId, pos, new CompoundTag(), CreatureSpawnEvent.SpawnReason.SPAWNER);
-                    level.getServer().getPluginManager().callEvent(ev);
-
-                    if (ev.isCancelled()) {
-                        ent.close();
-                        continue;
-                    }
-
-                    if(ent != null) {
-                        ent.namedTag.putBoolean("spawner", true);
-                        ent.spawnToAll();
-                    }
-
-                }
-            }
-        }
+//        if (this.delay++ >= Utils.rand(this.minSpawnDelay, this.maxSpawnDelay)) {
+//            this.delay = 0;
+//            int nearbyEntities = 0;
+//            boolean playerInRange = false;
+//            for (Entity entity : this.level.getEntities()) {
+//                if (!playerInRange && entity instanceof Player && !((Player) entity).isSpectator()) {
+//                    if (entity.distance(this) <= this.requiredPlayerRange) {
+//                        playerInRange = true;
+//                    }
+//                } else if (entity instanceof EntityAnimal || entity instanceof EntityMob) {
+//                    if (entity.distance(this) <= this.requiredPlayerRange) {
+//                        nearbyEntities++;
+//                    }
+//                }
+//            }
+//
+//            int amountToSpawn = minSpawnCount + nukkitRandom.nextInt(maxSpawnCount);
+//            for (int i = 0; i < amountToSpawn; i++) {
+//                if (playerInRange && nearbyEntities <= this.maxNearbyEntities) {
+//                    Position pos = new Position
+//                            (
+//                                    this.x + Utils.rand(-this.spawnRange, this.spawnRange),
+//                                    this.getY(),
+//                                    this.z + Utils.rand(-this.spawnRange, this.spawnRange),
+//                                    this.level
+//                            );
+//                    Block block = level.getBlock(pos);
+//                    //Mobs shouldn't spawn in walls, and they shouldn't retry to
+//                    if (
+//                            !block.getId().equals(Block.AIR) && !(block instanceof BlockFlowable) &&
+//                                    !block.getId().equals(BlockID.FLOWING_WATER) && !block.getId().equals(BlockID.WATER) &&
+//                                    !block.getId().equals(BlockID.LAVA) && !block.getId().equals(BlockID.FLOWING_LAVA)
+//                    ) {
+//                        continue;
+//                    }
+//                    if(!block.subtract(0, 1, 0).getLevelBlock().isSolid()) {
+//                        continue;
+//                    }
+//
+//                    Entity ent = Entity.createEntity(this.entityId, pos);
+//                    if(ent instanceof EntityMob && getLevel().getFullLight(this) > 7) {
+//                        ent.close();
+//                        continue;
+//                    }
+//                    CreatureSpawnEvent ev = new CreatureSpawnEvent(this.entityId, pos, new CompoundTag(), CreatureSpawnEvent.SpawnReason.SPAWNER);
+//                    level.getServer().getPluginManager().callEvent(ev);
+//
+//                    if (ev.isCancelled()) {
+//                        ent.close();
+//                        continue;
+//                    }
+//
+//                    if(ent != null) {
+//                        ent.namedTag.putBoolean("spawner", true);
+//                        ent.spawnToAll();
+//                    }
+//
+//                }
+//            }
+//        }
         return true;
     }
 

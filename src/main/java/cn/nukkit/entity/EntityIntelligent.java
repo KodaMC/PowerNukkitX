@@ -88,14 +88,14 @@ public abstract class EntityIntelligent extends EntityPhysical implements Logica
         if (!this.isImmobile()) { // immobile will disable physical AI.
             var behaviorGroup = getBehaviorGroup();
             if (behaviorGroup == null) return;
-            behaviorGroup.collectSensorData(this);
-            behaviorGroup.evaluateCoreBehaviors(this);
-            behaviorGroup.evaluateBehaviors(this);
-            behaviorGroup.tickRunningCoreBehaviors(this);
-            behaviorGroup.tickRunningBehaviors(this);
-            behaviorGroup.updateRoute(this);
-            behaviorGroup.applyController(this);
-            if (EntityAI.hasDebugOptions()) behaviorGroup.debugTick(this);
+//            behaviorGroup.collectSensorData(this);
+//            behaviorGroup.evaluateCoreBehaviors(this);
+//            behaviorGroup.evaluateBehaviors(this);
+//            behaviorGroup.tickRunningCoreBehaviors(this);
+//            behaviorGroup.tickRunningBehaviors(this);
+//            behaviorGroup.updateRoute(this);
+//            behaviorGroup.applyController(this);
+//            if (EntityAI.hasDebugOptions()) behaviorGroup.debugTick(this);
         }
         super.asyncPrepare(currentTick);
     }

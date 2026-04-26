@@ -18,7 +18,7 @@ public class GameplaySettings extends OkaeriConfig {
     @Comment("pnx.settings.gameplay.allowbeta")
     boolean allowBeta = false;
     @Comment("pnx.settings.gameplay.enableredstone")
-    boolean enableRedstone = true;
+    boolean enableRedstone = false;
     @Comment("pnx.settings.gameplay.tickRedstone")
     boolean tickRedstone = true;
     @Comment("pnx.settings.gameplay.viewDistance")
