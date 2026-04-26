@@ -11,6 +11,7 @@ import org.gradle.api.tasks.Copy
 import org.gradle.api.publish.maven.MavenPublication
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.testing.jacoco.tasks.JacocoReport
+import org.gradle.api.publish.maven.tasks.PublishToMavenRepository
 
 plugins {
     `java-library`
@@ -348,4 +349,7 @@ tasks.configureEach {
     if (name.contains("delombok") && !gradle.startParameter.taskNames.contains("javadoc")) {
         enabled = false
     }
+}
+tasks.withType<PublishToMavenRepository>().configureEach {
+    enabled = false
 }
