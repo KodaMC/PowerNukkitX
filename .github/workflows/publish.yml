@@ -11,6 +11,7 @@ jobs:
     permissions:
       contents: write
     if: (github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository) && contains(github.ref_name, 'master')
+
     steps:
       - name: Move CI tag
         run: |
@@ -39,7 +40,7 @@ jobs:
 
       - name: Check for file changes
         id: check-changed-files
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891
 
       - name: Output list of changed files
         run: echo "${{ steps.check-changed-files.outputs.all_changed_and_modified_files }}"
@@ -51,15 +52,8 @@ jobs:
     permissions:
       contents: write
     needs: [move-tag, check-files]
-    if: |
-      (github.event_name == 'push' || 
-      github.event.pull_request.head.repo.full_name != github.repository) && 
-      (contains(needs.check-files.outputs.changed-files, 'src/') ||
-      contains(needs.check-files.outputs.changed-files, '.github/workflows') || 
-      contains(needs.check-files.outputs.changed-files, 'build.gradle.kts') || 
-      (github.event_name == 'push' && 
-      (contains(github.event.commits[0].message, '+b') || contains(github.event.commits[0].message, '+u'))
-      ))
+
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
 
     steps:
       - name: Checkout repository
@@ -79,60 +73,39 @@ jobs:
         run: chmod +x gradlew
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@f236b35da9d031e13b1005234ebe4392ed54c580
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Build PNX & Publish to repository
-        run: ./gradlew publish --no-configuration-cache
+        run: ./gradlew clean publish --no-configuration-cache
         env:
           PNX_REPO_USERNAME: ${{ secrets.PNX_REPO_USERNAME }}
           PNX_REPO_PASSWORD: ${{ secrets.PNX_REPO_PASSWORD }}
 
-      - name: Upload test results to Codecov
-        if: success() && github.repository == 'PowerNukkitX/PowerNukkitX' && contains(github.ref_name, 'master')
-        uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+      # 🔍 Find the correct built JAR dynamically
+      - name: Locate built JAR
+        id: find_jar
+        run: |
+          JAR=$(ls build/libs/*.jar | head -n 1)
+          echo "jar_path=$JAR" >> $GITHUB_OUTPUT
+          echo "Found JAR: $JAR"
 
-      - name: Read version
-        id: read_version
-        uses: christian-draeger/read-properties@908f99d3334be3802ec7cb528395a69d19914e7b # v1.1.1
-        with:
-          path: 'build/resources/main/git.properties'
-          properties: 'git.build.version'
+      # 📦 Optional artifact backup (still zipped by GitHub)
       - name: Archive PowerNukkitX artifact
         uses: actions/upload-artifact@v4
         if: success()
         with:
           name: PowerNukkitX
-          path: build/powernukkitx.jar
+          path: ${{ steps.find_jar.outputs.jar_path }}
 
+      # 🚀 Release (direct .jar download, no zip)
       - name: Release latest snapshot
-        uses: xotl/cool-github-releases@7dcf348937ee2345e1b3a4bc80926d6cdb4a4492 # v1.1.10
+        uses: xotl/cool-github-releases@v1.1.10
         if: success() && contains(github.ref_name, 'master')
         with:
           mode: update
           isPrerelease: false
           tag_name: snapshot
           release_name: "Latest Snapshot"
-          body_mrkdwn: |
-            This is the **latest version of PowerNukkitX**, built from the latest source. 
-            (_Please note that the date on GitHub might appear outdated due to certain limitations._)
-            
-            **Corresponding commit:** <https://github.com/powernukkitx/powernukkitx/commit/${{ github.sha }}>
-            
-            > [!NOTE]
-            > If you encounter any issues, please report them directly on our [Discord](https://discord.gg/apwd7uauZg) or in the [GitHub Issues](https://github.com/powernukkitx/powernukkitx/issues) tab.
-            
-            ### How to Update
-            
-            To update to the latest version, follow these steps:
-            1. Download the `powernukkitx.jar` file from the assets below.
-            2. Replace the `powernukkitx.jar` file in your server's directory with the new one.
-            3. Restart your server.
-            4. Enjoy the latest features and bug fixes!
-            
-            
-            Thank you for using PowerNukkitX ⭐
-          assets: build/powernukkitx.jar
+          assets: ${{ steps.find_jar.outputs.jar_path }}
           replace_assets: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
