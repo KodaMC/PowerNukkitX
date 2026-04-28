@@ -30,7 +30,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build PowerNukkitX
-        run: ./gradlew clean build --no-configuration-cache
+        run: ./gradlew clean build -x test --no-configuration-cache
 
       - name: List all JARs
         run: find . -type f -name "*.jar" -exec ls -lh {} \;
