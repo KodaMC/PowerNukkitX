@@ -1,8 +1,8 @@
 name: PNX Build
 
 on:
-  pull_request:
   push:
+  pull_request:
 
 jobs:
   check-files:
@@ -10,38 +10,35 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    if: (github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository)
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     outputs:
       changed-files: ${{ steps.check-changed-files.outputs.all_changed_and_modified_files }}
 
     steps:
-      - name: Check out repository contents
+      - name: Checkout repository contents
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Check for file changes
         id: check-changed-files
-        uses: tj-actions/changed-files@e0021407031f5be11a464abee9a0776171c79891 # v47.0.1
+        uses: tj-actions/changed-files@v47
 
       - name: Output list of changed files
         run: echo "${{ steps.check-changed-files.outputs.all_changed_and_modified_files }}"
 
   build-server:
     name: Build PNX Server
-    timeout-minutes: 10
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     permissions:
       contents: read
     needs: [check-files]
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.pull_request.head.ref }}
           submodules: true
 
       - name: Set up JDK 21
@@ -53,16 +50,25 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@f236b35da9d031e13b1005234ebe4392ed54c580
+      - name: Setup Gradle cache
+        uses: gradle/actions/setup-gradle@v3
 
-      - name: Build PNX Server
-        run: ./gradlew clean assemble --no-configuration-cache
+      # 🔍 Optional but useful for debugging
+      - name: List Gradle tasks
+        run: ./gradlew tasks
+
+      # ✅ Build FAT JAR (this is the real fix)
+      - name: Build PNX Server (fat jar)
+        run: ./gradlew clean shadowJar --no-configuration-cache
+
+      # 🔍 Show what got built (helps debugging size issues)
+      - name: List build outputs
+        run: ls -lh build/libs
 
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
-           name: powernukkitx
-           path: |
+          name: powernukkitx
+          path: |
+            build/libs/*-all.jar
             build/libs/*.jar
-            **/build/libs/*.jar
