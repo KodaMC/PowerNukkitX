@@ -2,14 +2,14 @@ name: PNX Build
 
 on:
   push:
-    branches: [ master ]
+  pull_request:
   workflow_dispatch:
 
 jobs:
-  build-and-release:
+  build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -34,7 +34,7 @@ jobs:
 
       - name: List all JARs
         run: find . -type f -name "*.jar" -exec ls -lh {} \;
-
+        
       - name: Locate main JAR
         id: find_jar
         run: |
@@ -42,7 +42,8 @@ jobs:
             ! -name "*sources*" \
             ! -name "*javadoc*" \
             ! -name "*tests*" \
-            | sort -r | head -n 1)
+            ! -name "*plain*" \
+            -exec ls -lh {} \; | sort -k5 -hr | head -n 1 | awk '{print $9}')
 
           if [ -z "$JAR" ]; then
             echo "No valid jar found!"
@@ -52,18 +53,8 @@ jobs:
           echo "jar_path=$JAR" >> $GITHUB_OUTPUT
           echo "Selected JAR: $JAR"
 
-      - name: Upload artifact
+      - name: Upload PowerNukkitX JAR
         uses: actions/upload-artifact@v4
         with:
           name: powernukkitx
           path: ${{ steps.find_jar.outputs.jar_path }}
-
-      - name: Publish snapshot release
-        uses: xotl/cool-github-releases@v1.1.10
-        with:
-          mode: update
-          tag_name: snapshot
-          release_name: "Latest Snapshot"
-          assets: ${{ steps.find_jar.outputs.jar_path }}
-          replace_assets: true
-          github_token: ${{ secrets.GITHUB_TOKEN }}
