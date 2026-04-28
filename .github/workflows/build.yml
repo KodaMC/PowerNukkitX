@@ -2,38 +2,14 @@ name: PNX Build
 
 on:
   push:
-  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
 
 jobs:
-  check-files:
-    name: Check repository files
+  build-and-release:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
-    outputs:
-      changed-files: ${{ steps.check-changed-files.outputs.all_changed_and_modified_files }}
-
-    steps:
-      - name: Checkout repository contents
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Check for file changes
-        id: check-changed-files
-        uses: tj-actions/changed-files@v47
-
-      - name: Output list of changed files
-        run: echo "${{ steps.check-changed-files.outputs.all_changed_and_modified_files }}"
-
-  build-server:
-    name: Build PNX Server
-    timeout-minutes: 15
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    needs: [check-files]
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -53,22 +29,36 @@ jobs:
       - name: Setup Gradle cache
         uses: gradle/actions/setup-gradle@v3
 
-      # 🔍 Optional but useful for debugging
-      - name: List Gradle tasks
-        run: ./gradlew tasks
-
-      # ✅ Build FAT JAR (this is the real fix)
-      - name: Build PNX Server (fat jar)
+      # ✅ Build the CORRECT jar (fat jar ~60MB)
+      - name: Build PowerNukkitX
         run: ./gradlew clean shadowJar --no-configuration-cache
 
-      # 🔍 Show what got built (helps debugging size issues)
-      - name: List build outputs
-        run: ls -lh build/libs
+      # 🔍 Ensure correct file is picked
+      - name: Locate fat JAR
+        id: find_jar
+        run: |
+          JAR=$(ls build/libs/*-all.jar | head -n 1)
+          if [ -z "$JAR" ]; then
+            echo "No fat jar found!"
+            exit 1
+          fi
+          echo "jar_path=$JAR" >> $GITHUB_OUTPUT
+          echo "Found: $JAR"
 
-      - name: Upload JAR
+      # 📦 Optional artifact (for Actions tab)
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: powernukkitx
-          path: |
-            build/libs/*-all.jar
-            build/libs/*.jar
+          path: ${{ steps.find_jar.outputs.jar_path }}
+
+      # 🚀 Publish to GitHub Releases (REAL GOAL)
+      - name: Publish snapshot release
+        uses: xotl/cool-github-releases@v1.1.10
+        with:
+          mode: update
+          tag_name: snapshot
+          release_name: "Latest Snapshot"
+          assets: ${{ steps.find_jar.outputs.jar_path }}
+          replace_assets: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
