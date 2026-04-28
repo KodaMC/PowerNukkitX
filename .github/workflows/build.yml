@@ -29,30 +29,35 @@ jobs:
       - name: Setup Gradle cache
         uses: gradle/actions/setup-gradle@v3
 
-      # ✅ Build the CORRECT jar (fat jar ~60MB)
       - name: Build PowerNukkitX
-        run: ./gradlew clean shadowJar --no-configuration-cache
+        run: ./gradlew clean build --no-configuration-cache
 
-      # 🔍 Ensure correct file is picked
-      - name: Locate fat JAR
+      - name: List all JARs
+        run: find . -type f -name "*.jar" -exec ls -lh {} \;
+
+      - name: Locate main JAR
         id: find_jar
         run: |
-          JAR=$(ls build/libs/*-all.jar | head -n 1)
+          JAR=$(find . -type f -name "*.jar" \
+            ! -name "*sources*" \
+            ! -name "*javadoc*" \
+            ! -name "*tests*" \
+            | sort -r | head -n 1)
+
           if [ -z "$JAR" ]; then
-            echo "No fat jar found!"
+            echo "No valid jar found!"
             exit 1
           fi
-          echo "jar_path=$JAR" >> $GITHUB_OUTPUT
-          echo "Found: $JAR"
 
-      # 📦 Optional artifact (for Actions tab)
+          echo "jar_path=$JAR" >> $GITHUB_OUTPUT
+          echo "Selected JAR: $JAR"
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: powernukkitx
           path: ${{ steps.find_jar.outputs.jar_path }}
 
-      # 🚀 Publish to GitHub Releases (REAL GOAL)
       - name: Publish snapshot release
         uses: xotl/cool-github-releases@v1.1.10
         with:
